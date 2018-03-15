@@ -1,0 +1,11 @@
+{
+  "name": "muro",
+  "version": "0.0.1",
+  "factorio_version": "0.16",
+  "dependencies": ["base >= 0.16"],
+  "title": "Muro",
+  "author": "lingo",
+  "contact": "factorio@speak.geek.nz",
+  "homepage": "https://github.com/lingo/factorio-mod-muro",
+  "description": "Draw wall blocks, lines or rectangles"
+}
