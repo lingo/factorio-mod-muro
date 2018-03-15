@@ -50,9 +50,16 @@ local function build_walls(player, area, thickness=1)
   area.right_bottom.y = area.left_top.y + height
 
 
-  if width <= 0 or height <= 0 then
+  if width <= 0 and height <= 0 then
     return
   end
+  if width <= 0 then
+    width = 1
+  end
+  if height <= 0 then
+    height = 1
+  end
+
 
   -- player.print('muro WxH: ' .. width .. 'x' .. height)
 
