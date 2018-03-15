@@ -27,22 +27,26 @@ local function place_wall_ghost(player, position)
 end
 
 -- place a line horizontally of wall ghosts
-local function place_wall_line(player, area, thickness=1)
+local function place_wall_line(player, area, thickness)
+  if not thickness then thickness = 1; end
   for x = area.left_top.x, area.right_bottom.x do
     place_wall_ghost(player, {x=x, y=area.left_top.y})
   end
 end
 
-local function place_wall_sides(player, area, thickness=1)
+local function place_wall_sides(player, area, thickness)
+  if not thickness then thickness = 1; end
 end
 
-local function build_walls(player, area, thickness=1)
+local function build_walls(player, area, thickness)
+  if not thickness then thickness = 1; end
   -- player.print('wall area' .. serpent.block(area))
   -- area.left_top.x     = math.floor(area.left_top.x + 0.5)
   -- area.left_top.y     = math.floor(area.left_top.y + 0.5)
   -- area.right_bottom.x = math.ceil(area.right_bottom.x)
   -- area.right_bottom.y = math.ceil(area.right_bottom.y)
   -- log( "selcted_area, floored"..serpent.block(area) );
+
   -- Ensure rectangle is integral number of tiles wide/high
   width               = math.floor(area.right_bottom.x - area.left_top.x + 0.5)
   height              = math.floor(area.right_bottom.y - area.left_top.y + 0.5)
