@@ -156,7 +156,7 @@ script.on_event(defines.events.on_player_crafted_item, function(event)
   local entity = find_entity_in_inventory(player, item)
 
   if entity then
-    player.print('found item ' .. item .. ' now selecting')
+    -- player.print('found item ' .. item .. ' now selecting')
     player.cursor_stack.swap_stack(entity)
     -- set_crafting_item(nil)
   else
