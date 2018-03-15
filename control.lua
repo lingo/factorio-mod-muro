@@ -128,10 +128,6 @@ script.on_event(defines.events.on_player_selected_area, function(event)
   on_selected_area(event)
 end)
 
-local function set_crafting_item(item)
-  init_globals()
-  global['muro-wall-builder'].craft = item
-end
 
 script.on_event('muro-wall-builder', function(event)
   local player  = game.players[event.player_index]
@@ -158,49 +154,59 @@ script.on_event(defines.events.on_player_crafted_item, function(event)
   if entity then
     player.print('found item ' .. item .. ' now selecting')
     player.cursor_stack.swap_stack(entity)
-    set_crafting_item(nil)
+    -- set_crafting_item(nil)
   else
-    player.print("setting global to " .. item)
-    set_crafting_item(item)
+    -- player.print("setting global to " .. item)
+    -- set_crafting_item(item)
   end
 end)
 
-local function get_crafting_item()
-  if not global['muro-wall-builder'] or global['muro-wall-builder'].craft == nil then
-      return nil
-  end
-  return global['muro-wall-builder'].craft
-end
+-- local function get_crafting_item()
+--   if not global['muro-wall-builder'] or global['muro-wall-builder'].craft == nil then
+--       return nil
+--   end
+--   return global['muro-wall-builder'].craft
+-- end
 
-local function find_last_crafted_entity(player)
-    local item = get_crafting_item()
-    if not item then
-      player.print("No global found" .. serpent.block(global['muro-wall-builder']))
-      return
-    end
+-- local function find_last_crafted_entity(player)
+--     local item = get_crafting_item()
+--     if not item then
+--       player.print("No global found" .. serpent.block(global['muro-wall-builder']))
+--       return
+--     end
 
-    player.print('seeking last crafted' .. item)
+--     player.print('seeking last crafted' .. item)
 
-    local  entity = find_entity_in_inventory(player, item)
-    return entity
-end
+--     local  entity = find_entity_in_inventory(player, item)
+--     return entity
+-- end
 
-script.on_event(defines.events.on_player_main_inventory_changed, function(event)
-    local player = game.players[event.player_index]
-    local entity = find_last_crafted_entity(player)
+-- script.on_event(defines.events.on_player_main_inventory_changed, function(event)
+--     local player = game.players[event.player_index]
+--     local entity = find_last_crafted_entity(player)
 
-    if entity then
-      set_crafting_item(nil)
-      player.cursor_stack.swap_stack(entity)
-    end
-end)
+--     if entity then
+--       set_crafting_item(nil)
+--       player.cursor_stack.swap_stack(entity)
+--     end
+-- end)
 
-script.on_event(defines.events.on_player_quickbar_inventory_changed, function(event)
-    local player = game.players[event.player_index]
-    local entity = find_last_crafted_entity(player)
+-- script.on_event(defines.events.on_player_quickbar_inventory_changed, function(event)
+--     local player = game.players[event.player_index]
+--     local entity = find_last_crafted_entity(player)
 
-    if entity then
-      set_crafting_item(nil)
-      player.cursor_stack.swap_stack(entity)
-    end
-end)
+--     if entity then
+--       set_crafting_item(nil)
+--       player.cursor_stack.swap_stack(entity)
+--     end
+-- end)
+
+
+-- script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
+--     local player = game.players[event.player_index]
+--     if player.cursor_stack.valid_for_read then
+--       if player.cursor_stack.name == 'muro-wall-builder' then
+--       else
+--       end
+--     end
+-- end)
