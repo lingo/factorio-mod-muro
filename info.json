@@ -1,6 +1,6 @@
 {
   "name": "muro",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "factorio_version": "0.16",
   "dependencies": ["base >= 0.16"],
   "title": "Muro automatic wall builder",
