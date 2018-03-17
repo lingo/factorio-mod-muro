@@ -8,8 +8,6 @@ local MuroWallBuilder = {
     thickness           = 1,
     alt_thickness       = 2,
     placer              = nil,
-    place_wall_cb       = nil,
-    place_wall_ghost_cb = nil,
 }
 
 -- setmetatable(MuroWallBuilder, {__call = function(self,...) return self:init(...) end})
@@ -80,9 +78,11 @@ function MuroWallBuilder:deconstruct_entites(entities)
 end
 
 function MuroWallBuilder:place_wall_ghost(position)
-  deconstructable = self:find_deconstructable_entities(position)
-  if #deconstructable > 0 then
-    self:deconstruct_entites(deconstructable)
+  if self.mark_for_deconstruction then
+    deconstructable = self:find_deconstructable_entities(position)
+    if #deconstructable > 0 then
+      self:deconstruct_entites(deconstructable)
+    end
   end
 
   if not self.player.surface.can_place_entity({
@@ -196,14 +196,16 @@ end
 function MuroWallBuilder:on_setting_changed(event)
   if event.setting == self.NAME .. '-cheat' then
     if event.setting.value then
-      self.placer = self.place_wall_cb
+      self.placer = self.place_wall
     else
-      self.placer = self.place_wall_ghost_cb
+      self.placer = self.place_wall_ghost
     end
   elseif event.setting == self.NAME .. '-thickness' then
     self.thickness = event.value
   elseif event.setting == self.NAME .. '-alt-thickness' then
     self.alt_thickness = event.value
+  elseif event.setting == self.NAME .. '-deconstruct' then
+    self.mark_for_deconstruction = event.value
   end
 end
 
@@ -275,16 +277,6 @@ function MuroWallBuilder:init()
 
   local this = self
 
-  self.place_wall_ghost_cb = function(position)
-    return this:place_wall_ghost(position)
-  end
-
-  self.place_wall_cb = function(position)
-    return this:place_wall(position)
-  end
-  self.place_wall_cb = self.place_wall
-  self.place_wall_ghost_cb = self.place_wall_ghost
-
   self:bind_events()
   self:log('init finished, self = ' .. serpent.block(self))
 end
@@ -300,8 +292,10 @@ function MuroWallBuilder:local_init(event)
     self.placer = self.place_wall_ghost
   end
 
-  self.thickness                 = self:get_setting('thickness') or self.thickness
-  self.alt_thickness             = self:get_setting('alt-thickness') or self.thickness
+  self.thickness               = self:get_setting('thickness') or self.thickness
+  self.mark_for_deconstruction = self:get_setting('deconstruct') or self.mark_for_deconstruction
+  self.alt_thickness           = self:get_setting('alt-thickness') or self.thickness
+
   self:log('local init finished, self = ' .. serpent.block(self))
 end
 
