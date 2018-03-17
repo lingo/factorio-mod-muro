@@ -12,10 +12,10 @@ data:extend({
     selection_color = {r = 0.2, g = 0.8, b = 0.2, a = 0.2},
     alt_selection_color = {r = 0.2, g = 0.2, b = 0.8, a = 0.2},
     selection_mode = {"items-to-place"},
-    always_include_tiles = false,
+    always_include_tiles = true,
     alt_selection_mode = {"items-to-place"},
-    selection_cursor_box_type = "pair",
-    alt_selection_cursor_box_type = "pair"
+    selection_cursor_box_type = "entity",
+    alt_selection_cursor_box_type = "entity"
   },
   {
     type = "recipe",
