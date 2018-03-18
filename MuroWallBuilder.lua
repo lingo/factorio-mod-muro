@@ -14,7 +14,6 @@ local MuroWallBuilder = {
 MuroWallBuilder.__index = MuroWallBuilder
 
 function MuroWallBuilder:log(message)
-  log(tostring(self.debug) .. ' : ' .. message)
   if self.debug then
     log(message)
   end
