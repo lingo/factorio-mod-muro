@@ -95,7 +95,7 @@ function MuroWallBuilder:place_wall_ghost(position)
     position=position,
     force=self.player.force,
     build_check_type=defines.build_check_type.ghost_place }) then
-      self:log("muro: Skipping position where place ghost is not allowed"..serpent.line(position))
+      -- self:log("muro: Skipping position where place ghost is not allowed"..serpent.line(position))
       return
   end
 
@@ -114,8 +114,8 @@ function MuroWallBuilder:place_wall_ghost(position)
   })
 
   if #deconstructable > 0 then
-    self:log('marked ' .. MWBLib.dumps(deconstructable) .. ' entities for destruction around ' .. serpent.line(position))
-    self:log('place ghost at ' .. serpent.line(position) .. ' -> ' .. MWBLib.dumps(success))
+    -- self:log('marked ' .. MWBLib.dumps(deconstructable) .. ' entities for destruction around ' .. serpent.line(position))
+    -- self:log('place ghost at ' .. serpent.line(position) .. ' -> ' .. MWBLib.dumps(entity))
   end
 end
 
@@ -148,7 +148,7 @@ end
 
 function MuroWallBuilder:build(area, thickness)
   thickness = thickness or self.thickness
-  self:log('build ' .. serpent.line(area) .. ', ' .. thickness)
+  -- self:log('build ' .. serpent.line(area) .. ', ' .. thickness)
   -- player.print('wall area' .. serpent.block(area))
   -- self:log( "selcted_area, floored"..serpent.block(area) );
 
@@ -236,7 +236,7 @@ end
 
 function MuroWallBuilder:set_player_from_event(event)
   if not event.player_index then
-    self:log('no player in event : ' .. serpent.block(event))
+    -- self:log('no player in event : ' .. serpent.block(event))
     return
   end
   self.player = game.players[event.player_index]
@@ -289,7 +289,7 @@ function MuroWallBuilder:init()
   local this = self
 
   self:bind_events()
-  self:log('init finished, self = ' .. serpent.block(self))
+  -- self:log('init finished, self = ' .. serpent.block(self))
 end
 
 
@@ -307,7 +307,7 @@ function MuroWallBuilder:local_init(event)
   self.mark_for_deconstruction = self:get_setting('deconstruct') or self.mark_for_deconstruction
   self.alt_thickness           = self:get_setting('alt-thickness') or self.thickness
 
-  self:log('local init finished, self = ' .. serpent.block(self))
+  -- self:log('local init finished, self = ' .. serpent.block(self))
 end
 
 return MuroWallBuilder
