@@ -44,13 +44,19 @@ function MuroWallBuilder:place_wall(position)
     end
   end
 
-  self.player.surface.create_entity{name=entity_name,
+  local entity = self.player.surface.create_entity{name=entity_name,
     inner_name='stone-wall',
     expires=false,
     position=position,
     force=self.player.force,
     type='wall'
   }
+
+  script.raise_event(defines.events.script_raised_built, {
+    name     = defines.events.script_raised_built,
+    entity   = entity,
+    mod_name = self.NAME
+  })
 end
 
 function MuroWallBuilder:find_deconstructable_entities(position)
@@ -93,13 +99,19 @@ function MuroWallBuilder:place_wall_ghost(position)
       return
   end
 
-  local success = self.player.surface.create_entity{name="entity-ghost",
+  local entity = self.player.surface.create_entity{name="entity-ghost",
     inner_name='stone-wall',
     expires=false,
     position=position,
     force=self.player.force,
     type='wall'
   }
+
+  script.raise_event(defines.events.script_raised_built, {
+    name     = defines.events.script_raised_built,
+    entity   = entity,
+    mod_name = self.NAME
+  })
 
   if #deconstructable > 0 then
     self:log('marked ' .. MWBLib.dumps(deconstructable) .. ' entities for destruction around ' .. serpent.line(position))
