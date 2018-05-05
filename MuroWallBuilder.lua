@@ -259,27 +259,51 @@ function MuroWallBuilder:bind_events()
   local this = self
 
   script.on_event(defines.events.on_player_selected_area, function(event)
-    if event.item ~= this.NAME then return; end --If its not our wall builder, exit
-    this:local_init(event)
-    return this:on_selected_area(event, this.thickness)
+    local success,returnValue = pcall(function()
+      if event.item ~= this.NAME then return; end --If its not our wall builder, exit
+      this:local_init(event)
+      return this:on_selected_area(event, this.thickness)
+    end)
+    if success then
+      return returnValue
+    end
+    return false
   end)
 
   script.on_event(defines.events.on_player_alt_selected_area, function(event)
-    if event.item ~= this.NAME then return; end --If its not our wall builder, exit
-    this:local_init(event)
-    return this:on_selected_area(event, this.alt_thickness)
+    local success,returnValue = pcall(function()
+      if event.item ~= this.NAME then return; end --If its not our wall builder, exit
+      this:local_init(event)
+      return this:on_selected_area(event, this.alt_thickness)
+      end)
+    if success then
+      return returnValue
+    end
+    return false
   end)
 
   script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
-    this:local_init(event)
-    this:on_setting_changed(event)
+    local success,returnValue = pcall(function()
+      this:local_init(event)
+      this:on_setting_changed(event)
+      end)
+    if success then
+      return returnValue
+    end
+    return false
   end)
 
   script.on_event(MuroWallBuilder.NAME, function(event)
-    self:log('custom event' .. serpent.block(event))
-    -- this:set_player_from_event(event)
-    this:local_init(event)
-    this:select_wallbuilder_tool()
+    local success,returnValue = pcall(function()
+      -- self:log('custom event' .. serpent.block(event))
+      -- this:set_player_from_event(event)
+      this:local_init(event)
+      this:select_wallbuilder_tool()
+      end)
+    if success then
+      return returnValue
+    end
+    return false
   end)
 end
 
