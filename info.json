@@ -1,8 +1,8 @@
 {
   "name":             "muro",
-  "version":          "1.0.2",
-  "factorio_version": "0.16",
-  "dependencies":     ["base >= 0.16"],
+  "version":          "1.0.3",
+  "factorio_version": "0.18",
+  "dependencies":     ["base >= 0.18"],
   "title":            "Muro automatic wall builder",
   "author":           "lingo",
   "contact":          "factorio@speak.geek.nz",

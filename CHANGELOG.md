@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.3] - 2020-02-29
+### Changed
+Updated requirements to allow 0.18.x
+
 ## [1.0.1] - 2018-03-18
 ### Removed
 - debug logging and obsolete code
