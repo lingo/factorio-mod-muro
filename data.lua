@@ -8,7 +8,7 @@ data:extend({
     stack_size = 1,
     subgroup = "tool",
     order = "c[automated-construction]-d[muro-wall-builder]",
-    flags = {"goes-to-quickbar"},
+    flags = {},
     selection_color = {r = 0.2, g = 0.8, b = 0.2, a = 0.2},
     alt_selection_color = {r = 0.2, g = 0.2, b = 0.8, a = 0.2},
     selection_mode = {"items-to-place"},
