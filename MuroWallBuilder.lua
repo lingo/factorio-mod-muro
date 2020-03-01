@@ -240,8 +240,39 @@ function MuroWallBuilder:on_selected_area(event, thickness)
   --     area   = event.area,
   --     player = self.player,
   --     force  = self.player.force
-  --   }
-  self:build(event.area, thickness)
+    -- }
+  area = event.area
+
+  if #event.tiles then
+    MAX_SIZE = 2000000 -- https://wiki.factorio.com/World_generator#Maximum_map_size_and_used_memory
+    area = {left_top = {x = MAX_SIZE, y = MAX_SIZE}, right_bottom = {x = -MAX_SIZE, y = -MAX_SIZE}}
+    whichTiles = {left_top = {x = 0, y = 0}, right_bottom = {x=0, y=0}}
+    -- find tile boundaries
+    -- it appears tiles are in order from top left to bottom right,
+    -- in columns, so we could be cleverer and shortcut this loop
+    -- as long as we know the stride
+    for i,tile in ipairs(event.tiles) do
+      if tile.position.x < area.left_top.x then
+        area.left_top.x = tile.position.x
+        whichTiles.left_top.x = i
+      end
+      if tile.position.x > area.right_bottom.x then
+        area.right_bottom.x = tile.position.x
+        whichTiles.right_bottom.x = i
+      end
+      if tile.position.y < area.left_top.y then
+        area.left_top.y = tile.position.y
+        whichTiles.left_top.y = i
+      end
+      if tile.position.y > area.right_bottom.y then
+        area.right_bottom.y = tile.position.y
+        whichTiles.right_bottom.y = i
+      end
+    end
+    -- self.player.print(MWBLib.dumps(whichTiles))
+  end
+
+  self:build(area, thickness)
 end
 
 
