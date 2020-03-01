@@ -150,9 +150,9 @@ function MWBLib.hash_bbox(box)
     return cantorPair_v1(MWBLib.hash_position(box.left_top), MWBLib.hash_position(box.right_bottom))
 end
 
-function MWBLib.deconstruct_entites(player, entities)
+function MWBLib.deconstruct_entities(player, entities)
   if entities == nil or #entities == 0 then
-    log("deconstruct_entites passed nil or empty list")
+    log("deconstruct_entities passed nil or empty list")
     return
   end
 

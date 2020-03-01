@@ -73,15 +73,15 @@ function MuroWallBuilder:find_deconstructable_entities(position)
   return filtered_entities
 end
 
-function MuroWallBuilder:deconstruct_entites(entities)
-  return MWBLib.deconstruct_entites(self.player, entities)
+function MuroWallBuilder:deconstruct_entities(entities)
+  return MWBLib.deconstruct_entities(self.player, entities)
 end
 
 function MuroWallBuilder:place_wall_ghost(position)
   if self.mark_for_deconstruction then
     deconstructable = self:find_deconstructable_entities(position)
     if #deconstructable > 0 then
-      self:deconstruct_entites(deconstructable)
+      self:deconstruct_entities(deconstructable)
     end
   end
 
