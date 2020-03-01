@@ -31,7 +31,7 @@ data:extend({
     name = "muro-wall-builder",
     order = "c[automated-construction]-d[muro-wall-builder]",
     icon = {
-      filename = "__muro__/graphics/muro.png",
+      filename = "__muro__/graphics/muro_quickbar.png",
       priority = "extra-high-no-scale",
       size = 24,
       scale = 1,
