@@ -29,14 +29,25 @@ data:extend({
     },
     result = "muro-wall-builder"
   },
-})
-
-data:extend{
   {
     type = "custom-input",
     name = "muro-wall-builder",
     key_sequence = "CONTROL + W",
   },
-}
-
+  {
+    type = "shortcut",
+    action = "lua",
+    name = "muro-wall-builder",
+    order = "c[automated-construction]-d[muro-wall-builder]",
+    icon = {
+      filename = "__muro__/graphics/muro.png",
+      priority = "extra-high-no-scale",
+      size = 24,
+      scale = 1,
+      flags = {"icon"}
+    },
+    toggleable = false,
+    associated_control_input = "muro-wall-builder",
+  },
+})
 
