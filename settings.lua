@@ -23,7 +23,7 @@ data:extend({
         order         = 'd[muro-wall-builder-settings]'
     },
     {
-        type          = "bool-setting",
+        type          = "string-setting",
         name          = "muro-wall-builder-wall-name",
         default_value = 'stone-wall',
         setting_type  = "runtime-per-user",
