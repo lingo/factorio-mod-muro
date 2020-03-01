@@ -40,7 +40,7 @@ function MuroWallBuilder:place_wall(position)
     return
   end
 
-  if self.player.cheat_mode and have_walls then
+  if self.instant_build and have_walls then
     MWBLib.clear_player_cursor_stack(self.player)
     self.player.cursor_stack.swap_stack(stack)
     self.player.build_from_cursor{
@@ -182,7 +182,7 @@ function MuroWallBuilder:get_setting(args)
     return nil
   end
 
-  local settings = is_global and settings.global or settings.player
+  local settings = is_global and settings.global or settings.get_player_settings(self.player)
 
   if settings ~= nil then
     local key = args.full_key
@@ -207,7 +207,6 @@ function MuroWallBuilder:on_setting_changed(event)
     self.instant_build = value
 
     if value then
-
       self.placer = self.place_wall
     else
       self.placer = self.place_wall_ghost
@@ -367,7 +366,8 @@ function MuroWallBuilder:local_init(event)
   self.wall_name = self:get_setting('wall-name') or DEFAULT_WALL_TYPE
   self.wall_prototype = game.entity_prototypes[self.wall_name]
 
-  if self.instant_build = self:get_setting('cheat') then
+  self.instant_build = self:get_setting('cheat')
+  if self.instant_build then
     self.placer = self.place_wall
   else
     self.placer = self.place_wall_ghost
