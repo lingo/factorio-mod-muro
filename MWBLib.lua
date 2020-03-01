@@ -6,10 +6,7 @@ MWBLib.__index = MWBLib
 
 function MWBLib.find_entity_in_inventory(player, entity_name)
   local inventories = {
-    player.get_inventory(defines.inventory.player_main),
-    player.get_inventory(defines.inventory.player_quickbar),
-    player.get_inventory(defines.inventory.player_tools),
-    player.get_quickbar()
+    player.get_inventory(defines.inventory.character_main)
   }
 
   local entity = nil
