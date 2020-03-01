@@ -3,6 +3,14 @@ local MWBLib = {}
 -- setmetatable(MWBLib, {__call = function(self,...) return self:init(...) end})
 MWBLib.__index = MWBLib
 
+MWBLib.Colors = {
+  red = { 255, 0, 0 },
+  green = { 0, 255, 0 },
+  blue = { 0, 0, 255},
+  black = { 0, 0, 0 },
+  white = { 255, 255, 255 },
+  gray = { 128, 128, 128 },
+}
 
 function MWBLib.find_entity_in_inventory(player, entity_name)
   local inventories = {
