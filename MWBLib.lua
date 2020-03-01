@@ -14,7 +14,7 @@ MWBLib.Colors = {
 
 function MWBLib.find_entity_in_inventory(player, entity_name)
   local inventories = {
-    player.get_inventory(defines.inventory.character_main)
+    player.get_main_inventory()
   }
 
   local entity = nil
@@ -61,7 +61,7 @@ end
 
 function MWBLib.clear_player_cursor_stack(player)
   local stack = player.cursor_stack
-  local inventory = player.get_inventory(defines.inventory.character_main)
+  local inventory = player.get_main_inventory()
 
   if stack == nil
     or not stack.valid_for_read
