@@ -1,10 +1,15 @@
 local MWBLib = require('MWBLib')
 
+local DEFAULT_WALL_TYPE = 'stone-wall'
+
 local MuroWallBuilder = {
     NAME                = "muro-wall-builder", -- module name, see data.lua
     debug               = false,
+    debug               = true,
     player              = nil,
+    instant_build       = false, -- build walls (if true) or ghosts?
     wall_prototype      = nil,
+    wall_name           = DEFAULT_WALL_TYPE,
     thickness           = 1,
     alt_thickness       = 2,
     placer              = nil,
@@ -20,11 +25,11 @@ function MuroWallBuilder:log(message)
 end
 
 function MuroWallBuilder:place_wall(position)
-  local stack = MWBLib.find_entity_in_inventory(self.player, 'stone-wall')
+  local stack = MWBLib.find_entity_in_inventory(self.player, self.wall_name)
   local have_walls = stack ~= nil and stack.valid_for_read and stack.count >= 1
 
   local can_place = self.player.surface.can_place_entity({
-    name='stone-wall',
+    name=self.wall_name,
     position=position,
     force=self.player.force,
     build_check_type=defines.build_check_type.script
@@ -78,7 +83,7 @@ function MuroWallBuilder:place_wall_ghost(position)
   end
 
   if not self.player.surface.can_place_entity({
-    name='stone-wall',
+    name=self.wall_name,
     position=position,
     force=self.player.force,
     build_check_type=defines.build_check_type.ghost_place }) then
@@ -87,7 +92,7 @@ function MuroWallBuilder:place_wall_ghost(position)
   end
 
   local entity = self.player.surface.create_entity{name="entity-ghost",
-    inner_name='stone-wall',
+    inner_name=self.wall_name,
     expires=false,
     position=position,
     force=self.player.force,
@@ -169,16 +174,20 @@ function MuroWallBuilder:build(area, thickness)
   self:select_wallbuilder_tool()
 end
 
-function MuroWallBuilder:get_settings()
-  local setting = settings.get_player_settings(self.player)
-  return setting
-end
+function MuroWallBuilder:get_setting(args)
+  is_global = args.is_global or false
 
-function MuroWallBuilder:get_setting(key)
-  local settings = self:get_settings()
+  if not (args.full_key or args.key or args[1] or type(args) == 'string') then
+    self:log('get_setting called without a key')
+    return nil
+  end
+
+  local settings = is_global and settings.global or settings.player
 
   if settings ~= nil then
-    local setting = settings[self.NAME .. '-' .. key]
+    local key = args.full_key
+      or (self.NAME .. '-' .. (args.key or args[1] or args))
+    local setting = settings[key]
 
     if setting then
       return setting.value
@@ -189,18 +198,26 @@ function MuroWallBuilder:get_setting(key)
 end
 
 function MuroWallBuilder:on_setting_changed(event)
+  local value = self:get_setting{
+    full_key = event.setting,
+    is_global = event.setting_type == 'runtime-global'
+  }
+
   if event.setting == self.NAME .. '-cheat' then
-    if event.setting.value then
+    self.instant_build = value
+
+    if value then
+
       self.placer = self.place_wall
     else
       self.placer = self.place_wall_ghost
     end
   elseif event.setting == self.NAME .. '-thickness' then
-    self.thickness = event.value
+    self.thickness = value
   elseif event.setting == self.NAME .. '-alt-thickness' then
-    self.alt_thickness = event.value
+    self.alt_thickness = value
   elseif event.setting == self.NAME .. '-deconstruct' then
-    self.mark_for_deconstruction = event.value
+    self.mark_for_deconstruction = value
   end
 end
 
@@ -346,9 +363,11 @@ end
 
 function MuroWallBuilder:local_init(event)
   self:set_player_from_event(event)
-  self.wall_prototype = game.entity_prototypes['stone-wall']
 
-  if self:get_setting('cheat') then
+  self.wall_name = self:get_setting('wall-name') or DEFAULT_WALL_TYPE
+  self.wall_prototype = game.entity_prototypes[self.wall_name]
+
+  if self.instant_build = self:get_setting('cheat') then
     self.placer = self.place_wall
   else
     self.placer = self.place_wall_ghost
