@@ -55,12 +55,14 @@ function MWBLib.clear_player_cursor_stack(player)
   local stack = player.cursor_stack
   local inventory = player.get_inventory(defines.inventory.character_main)
 
-  if stack == nil or stack.count == 0 then
-    return true
+  if stack == nil
+    or not stack.valid_for_read
+    or (stack.valid_for_read and stack.count == 0) then
+    return nil
   end
 
   if player.clean_cursor() then
-    return true
+    return stack
   end
 
   local totalToInsert = stack.count

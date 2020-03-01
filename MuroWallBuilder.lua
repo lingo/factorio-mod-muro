@@ -21,12 +21,13 @@ end
 
 function MuroWallBuilder:place_wall(position)
   local stack = MWBLib.find_entity_in_inventory(self.player, 'stone-wall')
+  local have_walls = stack ~= nil and stack.valid_for_read and stack.count >= 1
 
   local can_place = self.player.surface.can_place_entity({
     name='stone-wall',
     position=position,
     force=self.player.force,
-    build_check_type=defines.build_check_type.ghost_place
+    build_check_type=defines.build_check_type.script
   })
 
   if not can_place then
@@ -34,24 +35,15 @@ function MuroWallBuilder:place_wall(position)
     return
   end
 
-  local entity_name = 'stone-wall'
-
-  if not self.player.cheat_mode and (stack == nil or stack.count < 1) then
-    entity_name = 'entity-ghost'
+  if self.player.cheat_mode and have_walls then
+    MWBLib.clear_player_cursor_stack(self.player)
+    self.player.cursor_stack.swap_stack(stack)
+    self.player.build_from_cursor{
+      position=position,
+    }
   else
-    if stack and stack.count > 0 then
-      stack.count = stack.count - 1
-    end
+    self:place_wall_ghost(position)
   end
-
-  local entity = self.player.surface.create_entity{name=entity_name,
-    inner_name='stone-wall',
-    expires=false,
-    position=position,
-    raise_built=true,
-    force=self.player.force,
-    type='wall'
-  }
 end
 
 function MuroWallBuilder:find_deconstructable_entities(position)
@@ -173,6 +165,8 @@ function MuroWallBuilder:build(area, thickness)
   -- handle bottom line (full line)
   area.left_top.y = math.max(area.left_top.y,  area.right_bottom.y - (thickness-1))
   self:place_wall_line(area, thickness)
+
+  self:select_wallbuilder_tool()
 end
 
 function MuroWallBuilder:get_settings()
@@ -215,14 +209,8 @@ function MuroWallBuilder:find_planner()
 end
 
 function MuroWallBuilder:select_wallbuilder_tool()
-  local planner = self:find_planner(self.player)
-
-  if planner == nil then
-    MWBLib.clear_player_cursor_stack(self.player)
-    self.player.cursor_stack.set_stack({ name="muro-wall-builder", count=1 })
-  else
-    self.player.cursor_stack.swap_stack(planner)
-  end
+  MWBLib.clear_player_cursor_stack(self.player)
+  self.player.cursor_stack.set_stack({ name = self.NAME, count = 1 })
 end
 
 function MuroWallBuilder:set_player_from_event(event)
