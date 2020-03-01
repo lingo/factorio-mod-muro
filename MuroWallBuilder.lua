@@ -218,7 +218,8 @@ function MuroWallBuilder:select_wallbuilder_tool()
   local planner = self:find_planner(self.player)
 
   if planner == nil then
-    self.player.begin_crafting{count=1, recipe=self.NAME}
+    MWBLib.clear_player_cursor_stack(self.player)
+    self.player.cursor_stack.set_stack({ name="muro-wall-builder", count=1 })
   else
     self.player.cursor_stack.swap_stack(planner)
   end

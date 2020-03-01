@@ -29,6 +29,66 @@ function MWBLib.set_player_cursor_stack(player, entity_name)
   return false
 end
 
+function MWBLib.can_item_be_held_in_inventory(stack)
+  if stack.count == 0 then
+    return false
+  end
+
+  local proto = stack.prototype
+
+  if proto then
+    if proto.flags == nil then
+      return true
+    end
+
+    for _,key in ipairs(proto.flags) do
+      if key == "only-in-cursor" then
+        return false
+      end
+    end
+
+    return true
+  end
+end
+
+function MWBLib.clear_player_cursor_stack(player)
+  local stack = player.cursor_stack
+  local inventory = player.get_inventory(defines.inventory.character_main)
+
+  if stack == nil or stack.count == 0 then
+    return true
+  end
+
+  if player.clean_cursor() then
+    return true
+  end
+
+  local totalToInsert = stack.count
+  local countInserted = 0
+
+  if inventory.can_insert(stack)
+    and MWBLib.can_item_be_held_in_inventory(stack) then
+
+    countInserted = inventory.insert(stack)
+  end
+
+  if countInserted < totalToInsert then
+    -- spill remaining
+    local countToSpill = totalToInsert - countInserted
+
+    player.surface.spill_item_stack(
+      player.position,
+      {name=stack.name, count=countToSpill},
+      --[[enable_looted=--]]true,
+      --[[destruct for force--]]nil,
+      --[[allow_belts=--]]false
+    )
+  end
+
+  stack.clear()
+  return countInserted >= totalToInsert
+end
+
 function MWBLib.get_factorio_obj_data(obj)
     local keys = {
         'name', 'type', 'direction', 'count', 'position', 'bounding_box', 'selection_box'
