@@ -289,6 +289,7 @@ function MuroWallBuilder:bind_events()
     if success then
       return returnValue
     end
+    log(returnValue)
     return false
   end)
 
@@ -301,6 +302,7 @@ function MuroWallBuilder:bind_events()
     if success then
       return returnValue
     end
+    log(returnValue)
     return false
   end)
 
@@ -312,6 +314,7 @@ function MuroWallBuilder:bind_events()
     if success then
       return returnValue
     end
+    log(returnValue)
     return false
   end)
 
@@ -324,6 +327,7 @@ function MuroWallBuilder:bind_events()
     if success then
       return returnValue
     end
+    log(returnValue)
     return false
   end)
 
@@ -337,6 +341,7 @@ function MuroWallBuilder:bind_events()
     if success then
       return returnValue
     end
+    log(returnValue)
     return false
   end)
 end
