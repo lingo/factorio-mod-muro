@@ -69,7 +69,7 @@ function MWBLib.clear_player_cursor_stack(player)
     return nil
   end
 
-  if player.clean_cursor() then
+  if player.clear_cursor() then
     return stack
   end
 
