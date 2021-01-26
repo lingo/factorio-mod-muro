@@ -82,15 +82,6 @@ function MuroWallBuilder:place_wall_ghost(position)
     end
   end
 
-  if not self.player.surface.can_place_entity({
-    name=self.wall_name,
-    position=position,
-    force=self.player.force,
-    build_check_type=defines.build_check_type.ghost_place }) then
-      -- self:log("muro: Skipping position where place ghost is not allowed"..serpent.line(position))
-      return
-  end
-
   local entity = self.player.surface.create_entity{name="entity-ghost",
     inner_name=self.wall_name,
     expires=false,
