@@ -5,7 +5,6 @@ local DEFAULT_WALL_TYPE = 'stone-wall'
 local MuroWallBuilder = {
     NAME                = "muro-wall-builder", -- module name, see data.lua
     debug               = false,
-    debug               = true,
     player              = nil,
     instant_build       = false, -- build walls (if true) or ghosts?
     wall_prototype      = nil,
