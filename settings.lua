@@ -32,7 +32,7 @@ data:extend({
     {
         type          = "bool-setting",
         name          = "muro-wall-builder-destroy-buildings",
-        default_value = false,
+        default_value = true,
         setting_type  = "runtime-per-user",
         order         = 'e[muro-wall-builder-settings]'
     },
