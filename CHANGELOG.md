@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0] - 2026-09-30
+### Added
+- Destruction mode: right-click-drag with the tool clears and rebuilds the wall line: marks trees/rocks (and with the "Destroy buildings" setting, default off, also player-built entities) for deconstruction — but only inside the exact wall footprint, not the whole dragged rectangle — then lays the wall ghosts over the same spots.
+
+### Changed
+- Shift+drag now builds walls with the alternate thickness (it previously shared the normal selection); right-drag is the destructive clear.
+
 ## [2.0.0] - 2026-09-30
 ### Changed
 Updated for Factorio 2.0: selection tool prototype now uses `select`/`alt_select` mode tables, and entity-ghost creation no longer passes the removed `type` field.

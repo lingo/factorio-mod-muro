@@ -220,6 +220,13 @@ function MWBLib.hash_bbox(box)
     return cantorPair_v1(MWBLib.hash_position(box.left_top), MWBLib.hash_position(box.right_bottom))
 end
 
+function MWBLib.boxes_overlap(lt, rb, entity_selection_box)
+  return lt.x < entity_selection_box.right_bottom.x
+     and rb.x > entity_selection_box.left_top.x
+     and lt.y < entity_selection_box.right_bottom.y
+     and rb.y > entity_selection_box.left_top.y
+end
+
 function MWBLib.deconstruct_entities(player, entities, item_index)
   if entities == nil or #entities == 0 then
     log("deconstruct_entities passed nil or empty list")
