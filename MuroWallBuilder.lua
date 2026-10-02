@@ -12,6 +12,72 @@ local MuroWallBuilder = {
     thickness           = 1,
     alt_thickness       = 2,
     placer              = nil,
+
+    -- destruction (right-drag): trees/rocks always, player-built stuff
+    -- only when the destroy-buildings setting is on.
+    DECON_TYPES_ALL     = {'tree', 'simple-entity'},
+    DECON_TYPES_MACHINES= {'cliffs',
+                           'corpse',
+                           'fish',
+                           'electric-pole',
+                           'inserter',
+                           'transport-belt',
+                           'loader',
+                           'underground-belt',
+                           'splitter',
+                           'wall',
+                           'gate',
+                           'lamp',
+                           'pipe',
+                           'storage-tank',
+                           'radar',
+                           'rocket-silo',
+                           'container',
+                           'logistic-container',
+                           'assembling-machine',
+                           'furnace',
+                           'lab',
+                           'mining-drill',
+                           'pump',
+                           'offshore-pump',
+                           'boiler',
+                           'generator',
+                           'solar-panel',
+                           'accumulator',
+                           'reactor',
+                           'heat-pipe',
+                           'electric-turret',
+                           'ammo-turret',
+                           'fluid-turret',
+                           'artillery-turret',
+                           'artillery-wagon',
+                           'car',
+                           'spider-vehicle',
+                           'locomotive',
+                           'cargo-wagon',
+                           'fluid-wagon',
+                           'train-stop',
+                           'beacon',
+                           'roboport',
+                           'curved-rail-a',
+                           'curved-rail-b',
+                           'straight-rail',
+                           'rail-ramp',
+                           'elevated-straight-rail',
+                           'elevated-curved-rail-a',
+                           'elevated-curved-rail-b',
+                           'elevated-half-diagonal-rail',
+                           'half-diagonal-rail',
+                           'rail-support',
+                           'land-mine',
+                           'market',
+                           'programmable-speaker',
+                           'linked-container',
+                           'infinity-container',
+                           'infinity-pipe',
+                           'heat-interface',
+                           'player-port'},
+    destroy_buildings   = false,
 }
 
 -- setmetatable(MuroWallBuilder, {__call = function(self,...) return self:init(...) end})
@@ -35,7 +101,6 @@ function MuroWallBuilder:place_wall(position)
   })
 
   if not can_place then
-    -- self:log("muro: Skipping position where place is not allowed"..serpent.block(position))
     return
   end
 
@@ -106,51 +171,17 @@ function MuroWallBuilder:place_wall_ghost(position)
   end
 end
 
--- place a line horizontally of wall ghosts
-function MuroWallBuilder:place_wall_line(area, thickness)
+-- All wall-spot positions (tile centers) the wall line/rectangle of the
+-- given thickness occupies for a selection area: top line, sides, bottom
+-- line. Single source of truth used by both building and destroying so the
+-- destruction footprint always matches the wall footprint exactly.
+function MuroWallBuilder:wall_spots(area, thickness)
   thickness = thickness or self.thickness
-  local x2  = math.max(area.right_bottom.x, area.left_top.x + thickness -1)
-
-  for i = 0, thickness-1 do
-    for x = area.left_top.x, x2 do
-      self:placer({x=x, y=area.left_top.y + i})
-    end
-  end
-end
-
-function MuroWallBuilder:place_wall_sides(area, thickness)
-  thickness = thickness or self.thickness
-  local x1  = area.left_top.x
-  local x2  = math.max(area.right_bottom.x, x1 + thickness - 1)
-
-  -- handle middle (only sides)
-  for y = area.left_top.y+thickness, area.right_bottom.y-thickness do
-    for i = 0, thickness-1 do
-      self:placer({x = x1+i, y=y })
-      self:placer({x = x2-i, y=y })
-    end
-  end
-
-end
-
-function MuroWallBuilder:build(area, thickness)
-  thickness = thickness or self.thickness
-  -- self:log('build ' .. serpent.line(area) .. ', ' .. thickness)
-  -- player.print('wall area' .. serpent.block(area))
-  -- self:log( "selcted_area, floored"..serpent.block(area) );
-
-  -- Ensure rectangle is integral number of tiles wide/high
-  local width         = math.floor(area.right_bottom.x - area.left_top.x + 0.5)
-  local height        = math.floor(area.right_bottom.y - area.left_top.y + 0.5)
-  area.left_top.x     = math.floor(area.left_top.x) + 0.5
-  area.left_top.y     = math.floor(area.left_top.y) + 0.5
-  area.right_bottom.x = area.left_top.x + width
-  area.right_bottom.y = area.left_top.y + height
-
-  self.marked_for_deconstruct = {}
+  local width  = math.floor(area.right_bottom.x - area.left_top.x + 0.5)
+  local height = math.floor(area.right_bottom.y - area.left_top.y + 0.5)
 
   if width <= 0 and height <= 0 then
-    return
+    return {}
   end
   if width <= 0 then
     width = thickness
@@ -159,17 +190,45 @@ function MuroWallBuilder:build(area, thickness)
     height = thickness
   end
 
-  -- player.print('muro WxH: ' .. width .. 'x' .. height)
+  local x1 = math.floor(area.left_top.x) + 0.5
+  local y1 = math.floor(area.left_top.y) + 0.5
+  local x2 = math.max(x1 + width, x1 + thickness - 1)
 
-  -- handle top line (full line)
-  self:place_wall_line(area, thickness)
+  local spots = {}
+  local function line(ya, yb)
+    for y = ya, yb do
+      for x = x1, x2 do
+        spots[#spots + 1] = {x = x, y = y}
+      end
+    end
+  end
 
-  -- handle sides
-  self:place_wall_sides(area, thickness)
+  -- top line (full)
+  line(y1, y1 + thickness - 1)
 
-  -- handle bottom line (full line)
-  area.left_top.y = math.max(area.left_top.y,  area.right_bottom.y - (thickness-1))
-  self:place_wall_line(area, thickness)
+  -- sides (middle only)
+  for y = y1 + thickness, y1 + height - thickness do
+    for i = 0, thickness - 1 do
+      spots[#spots + 1] = {x = x1 + i, y = y}
+      spots[#spots + 1] = {x = x2 - i, y = y}
+    end
+  end
+
+  -- bottom line (full)
+  local yb = math.max(y1, y1 + height - (thickness - 1))
+  line(yb, yb + thickness - 1)
+
+  return spots
+end
+
+function MuroWallBuilder:build(area, thickness)
+  thickness = thickness or self.thickness
+
+  self.marked_for_deconstruct = {}
+
+  for _,spot in ipairs(self:wall_spots(area, thickness)) do
+    self:placer(spot)
+  end
 
   self:select_wallbuilder_tool()
 end
@@ -238,6 +297,43 @@ function MuroWallBuilder:set_player_from_event(event)
   self:log('player set from event = ' .. self.player.name)
 end
 
+function MuroWallBuilder:deconstruct_wall_footprint(event)
+  local spots = self:wall_spots(event.area, self.thickness)
+  if #spots == 0 then return end
+
+  local types = {
+    self.DECON_TYPES_ALL, -- trees, rocks: always
+  }
+  if self.destroy_buildings then
+    types[#types + 1] = self.DECON_TYPES_MACHINES
+  end
+
+  local marked = 0
+
+  for _,type_list in ipairs(types) do
+    local entities = MWBLib.find_entities_by_types(self.player, event.area, type_list)
+    for _,entity in ipairs(entities) do
+      local box = entity.selection_box
+      if box then
+        for _,spot in ipairs(spots) do
+          -- spot is a tile center; the wall's tile is the 1x1 square around it
+          if MWBLib.boxes_overlap({x = spot.x - 0.5, y = spot.y - 0.5},
+                                  {x = spot.x + 0.5, y = spot.y + 0.5}, box) then
+            entity.order_deconstruction(self.player.force)
+            marked = marked + 1
+            break
+          end
+        end
+      end
+    end
+  end
+
+  self:log('deconstruct_wall_footprint: marked ' .. marked .. ' entities')
+end
+
+-- Note: ghost mode only. cheat/instant-build mode bypasses
+-- deconstruct-clearing entirely (documented behavior from 1.1).
+
 function MuroWallBuilder:on_selected_area(event, thickness)
   self:log('on_selected_area ' .. event.name .. ', thickness = ' .. thickness)
   -- self.player.surface.deconstruct_area{
@@ -245,9 +341,9 @@ function MuroWallBuilder:on_selected_area(event, thickness)
   --     player = self.player,
   --     force  = self.player.force
     -- }
-  area = event.area
+  local area = event.area
 
-  if #event.tiles then
+  if event.tiles and #event.tiles > 0 then
     local MAX_SIZE = 2000000 -- https://wiki.factorio.com/World_generator#Maximum_map_size_and_used_memory
     area = {left_top = {x = MAX_SIZE, y = MAX_SIZE}, right_bottom = {x = -MAX_SIZE, y = -MAX_SIZE}}
     local whichTiles = {left_top = {x = 0, y = 0}, right_bottom = {x=0, y=0}}
@@ -322,6 +418,21 @@ function MuroWallBuilder:bind_events()
     return false
   end)
 
+  script.on_event(defines.events.on_player_reverse_selected_area, function(event)
+    local success,returnValue = pcall(function()
+      if event.item ~= this.NAME then return; end --If its not our wall builder, exit
+      this:local_init(event)
+      this:deconstruct_wall_footprint(event)
+      -- after clearing, also lay the wall line over the dragged area
+      this:on_selected_area(event, this.thickness)
+      end)
+    if success then
+      return returnValue
+    end
+    log(returnValue)
+    return false
+  end)
+
   script.on_event(defines.events.on_lua_shortcut, function(event)
     local success,returnValue = pcall(function()
       if event.prototype_name ~= this.NAME then return; end --If its not our wall builder, exit
@@ -376,6 +487,7 @@ function MuroWallBuilder:local_init(event)
   self.thickness               = self:get_setting('thickness') or self.thickness
   self.mark_for_deconstruction = self:get_setting('deconstruct') or self.mark_for_deconstruction
   self.alt_thickness           = self:get_setting('alt-thickness') or self.thickness
+  self.destroy_buildings       = self:get_setting('destroy-buildings') or false
 
   -- self:log('local init finished, self = ' .. serpent.block(self))
 end

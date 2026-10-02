@@ -23,6 +23,13 @@ data:extend({
       entity_filters = {},
       entity_filter_mode = "whitelist",
     },
+    reverse_select = {
+      border_color = {r = 0.8, g = 0.2, b = 0.2, a = 0.2},
+      cursor_box_type = "entity",
+      mode = {"deconstruct"},
+      entity_filters = {},
+      entity_filter_mode = "whitelist",
+    },
     always_include_tiles = true,
     show_in_library = true
   },
