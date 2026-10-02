@@ -5,7 +5,6 @@ local DEFAULT_WALL_TYPE = 'stone-wall'
 local MuroWallBuilder = {
     NAME                = "muro-wall-builder", -- module name, see data.lua
     debug               = false,
-    debug               = true,
     player              = nil,
     instant_build       = false, -- build walls (if true) or ghosts?
     wall_prototype      = nil,
@@ -71,10 +70,12 @@ function MuroWallBuilder:find_deconstructable_entities(position)
 end
 
 function MuroWallBuilder:deconstruct_entities(entities)
+  -- item_index omitted: we have no planner item stack to attribute undo to
   return MWBLib.deconstruct_entities(self.player, entities)
 end
 
 function MuroWallBuilder:place_wall_ghost(position)
+  local deconstructable = {}
   if self.mark_for_deconstruction then
     deconstructable = self:find_deconstructable_entities(position)
     if #deconstructable > 0 then
@@ -96,7 +97,6 @@ function MuroWallBuilder:place_wall_ghost(position)
     expires=false,
     position=position,
     force=self.player.force,
-    type='wall',
     raise_built=true
   }
 
@@ -140,8 +140,8 @@ function MuroWallBuilder:build(area, thickness)
   -- self:log( "selcted_area, floored"..serpent.block(area) );
 
   -- Ensure rectangle is integral number of tiles wide/high
-  width               = math.floor(area.right_bottom.x - area.left_top.x + 0.5)
-  height              = math.floor(area.right_bottom.y - area.left_top.y + 0.5)
+  local width         = math.floor(area.right_bottom.x - area.left_top.x + 0.5)
+  local height        = math.floor(area.right_bottom.y - area.left_top.y + 0.5)
   area.left_top.x     = math.floor(area.left_top.x) + 0.5
   area.left_top.y     = math.floor(area.left_top.y) + 0.5
   area.right_bottom.x = area.left_top.x + width
@@ -175,7 +175,7 @@ function MuroWallBuilder:build(area, thickness)
 end
 
 function MuroWallBuilder:get_setting(args)
-  is_global = args.is_global or false
+  local is_global = args.is_global or false
 
   if not (args.full_key or args.key or args[1] or type(args) == 'string') then
     self:log('get_setting called without a key')
@@ -248,9 +248,9 @@ function MuroWallBuilder:on_selected_area(event, thickness)
   area = event.area
 
   if #event.tiles then
-    MAX_SIZE = 2000000 -- https://wiki.factorio.com/World_generator#Maximum_map_size_and_used_memory
+    local MAX_SIZE = 2000000 -- https://wiki.factorio.com/World_generator#Maximum_map_size_and_used_memory
     area = {left_top = {x = MAX_SIZE, y = MAX_SIZE}, right_bottom = {x = -MAX_SIZE, y = -MAX_SIZE}}
-    whichTiles = {left_top = {x = 0, y = 0}, right_bottom = {x=0, y=0}}
+    local whichTiles = {left_top = {x = 0, y = 0}, right_bottom = {x=0, y=0}}
     -- find tile boundaries
     -- it appears tiles are in order from top left to bottom right,
     -- in columns, so we could be cleverer and shortcut this loop
@@ -364,7 +364,7 @@ function MuroWallBuilder:local_init(event)
   self:set_player_from_event(event)
 
   self.wall_name = self:get_setting('wall-name') or DEFAULT_WALL_TYPE
-  self.wall_prototype = game.entity_prototypes[self.wall_name]
+  self.wall_prototype = prototypes.entity[self.wall_name]
 
   self.instant_build = self:get_setting('cheat')
   if self.instant_build then
