@@ -85,6 +85,14 @@ local MuroWallBuilder = {
                            'heat-interface',
                            'player-port'},
     destroy_buildings   = false,
+    -- entity types this drag may clear out of the way; see
+    -- compute_clearable_types(). Empty means "nothing may be cleared".
+    clearable           = {},
+    -- every type this mod can clear; anything outside it is not an obstacle
+    blocking_types      = {},
+    destroying          = false, -- true while handling a right-drag
+    -- tiles this drag has already put a ghost on
+    ghosted_tiles       = {},
 }
 
 -- setmetatable(MuroWallBuilder, {__call = function(self,...) return self:init(...) end})
@@ -157,6 +165,62 @@ function MuroWallBuilder:deconstruct_entities(entities)
   return MWBLib.deconstruct_entities(self.player, entities, self:next_undo_index())
 end
 
+-- Types this drag may clear out of the way, as a set keyed by entity type.
+-- Left-drag only ever touches trees/rocks, and only when the deconstruct
+-- setting is on; the destructive right-drag additionally clears
+-- player-built entities when the destroy-buildings setting is on.
+function MuroWallBuilder:compute_clearable_types()
+  local set = {}
+
+  if self.destroying then
+    for _,t in ipairs(self.DECON_TYPES_ALL) do
+      set[t] = true
+    end
+    if self.destroy_buildings then
+      for _,t in ipairs(self.DECON_TYPES_MACHINES) do
+        set[t] = true
+      end
+    end
+  elseif self.mark_for_deconstruction then
+    for _,t in ipairs(self.DECON_TYPES_ALL) do
+      set[t] = true
+    end
+  end
+
+  return set
+end
+
+-- Types that can actually be in the way of a wall: the kinds of entity this
+-- mod clears (trees, rocks, machines). Everything else has to be ignored,
+-- because a logistic robot flying over the line, the character standing on
+-- it, or an item on the ground are not obstacles - treating them as such
+-- punched holes in the wall wherever one happened to be.
+function MuroWallBuilder:compute_blocking_types()
+  local set = {}
+
+  for _,t in ipairs(self.DECON_TYPES_ALL) do
+    set[t] = true
+  end
+  for _,t in ipairs(self.DECON_TYPES_MACHINES) do
+    set[t] = true
+  end
+
+  return set
+end
+
+-- A ghost never blocks a build, and neither should anything sitting on a
+-- tile this same drag has already ghosted: both must be ignored when
+-- judging a tile, or a spot next to one of our own ghosts reads as
+-- occupied and loses its wall.
+function MuroWallBuilder:is_ignorable(entity)
+  if entity.type == "entity-ghost" or entity.name == "entity-ghost" then
+    return true
+  end
+
+  return self.ghosted_tiles[math.floor(entity.position.x) .. ',' ..
+                             math.floor(entity.position.y)] == true
+end
+
 function MuroWallBuilder:place_wall_ghost(position)
   local deconstructable = {}
   if self.mark_for_deconstruction then
@@ -166,13 +230,44 @@ function MuroWallBuilder:place_wall_ghost(position)
     end
   end
 
-  if not self.player.surface.can_place_entity({
+  -- Decide the spot from what actually overlaps THIS tile, never from
+  -- can_place_entity: with a ghost check type that call does not reliably
+  -- report entities, which is how a left-drag ended up ghosting a building.
+  -- The rule is per tile: every obstacle on the wall tile must be something
+  -- this drag clears. Anything else skips the spot, which keeps left-drag
+  -- off player-built entities while still letting the destructive right-drag
+  -- ghost a tile whose buildings are on their way out. Only types that can
+  -- really obstruct a wall count - see compute_blocking_types.
+  local lt = {x = position.x - 0.5, y = position.y - 0.5}
+  local rb = {x = position.x + 0.5, y = position.y + 0.5}
+  local clearable_here = false
+
+  for _,e in ipairs(self.player.surface.find_entities_filtered{area = {lt, rb}}) do
+    -- Test the real overlap ourselves: an entity merely touching the tile
+    -- edge must not count as being on it.
+    if self.blocking_types[e.type] and not self:is_ignorable(e) and e.selection_box
+        and MWBLib.boxes_overlap(lt, rb, e.selection_box) then
+      if not self.clearable[e.type] then
+        log('muro: skipping ' .. position.x .. ',' .. position.y ..
+            ' - ' .. e.name .. ' (' .. e.type .. ') is not cleared by this drag')
+        return
+      end
+      clearable_here = true
+    end
+  end
+
+  -- Nothing real here, so the world itself has to allow a wall (not water,
+  -- not a cliff, not off the map). build_check_type.ghost_place was removed
+  -- in Factorio 1.1.6 (forum 70603), which is what left this check nil and
+  -- silently refusing every occupied tile; `script` is what place_wall uses.
+  if not clearable_here and not self.player.surface.can_place_entity({
     name=self.wall_name,
     position=position,
     force=self.player.force,
-    build_check_type=defines.build_check_type.ghost_place }) then
-      -- self:log("muro: Skipping position where place ghost is not allowed"..serpent.line(position))
-      return
+    build_check_type=defines.build_check_type.script }) then
+    log('muro: skipping ' .. position.x .. ',' .. position.y ..
+        ' - the world does not allow a wall here')
+    return
   end
 
   local entity = self.player.surface.create_entity{name="entity-ghost",
@@ -185,9 +280,12 @@ function MuroWallBuilder:place_wall_ghost(position)
     raise_built=true
   }
 
-  if #deconstructable > 0 then
-    -- self:log('marked ' .. MWBLib.dumps(deconstructable) .. ' entities for destruction around ' .. serpent.line(position))
-    -- self:log('place ghost at ' .. serpent.line(position) .. ' -> ' .. MWBLib.dumps(entity))
+  if entity then
+    -- so this drag's own ghosts are never mistaken for obstacles
+    self.ghosted_tiles[math.floor(position.x) .. ',' ..
+                       math.floor(position.y)] = true
+  else
+    log('muro: the game refused a wall ghost at ' .. position.x .. ',' .. position.y)
   end
 end
 
@@ -245,6 +343,7 @@ function MuroWallBuilder:build(area, thickness)
   thickness = thickness or self.thickness
 
   self.marked_for_deconstruct = {}
+  self.clearable = self:compute_clearable_types()
 
   for _,spot in ipairs(self:wall_spots(area, thickness)) do
     self:placer(spot)
@@ -442,6 +541,7 @@ function MuroWallBuilder:bind_events()
     local success,returnValue = pcall(function()
       if event.item ~= this.NAME then return; end --If its not our wall builder, exit
       this:local_init(event)
+      this.destroying = true -- right-drag is the destructive mode
       this:deconstruct_wall_footprint(event)
       -- after clearing, also lay the wall line over the dragged area
       this:on_selected_area(event, this.thickness)
@@ -508,6 +608,10 @@ function MuroWallBuilder:local_init(event)
   self.mark_for_deconstruction = self:get_setting('deconstruct') or self.mark_for_deconstruction
   self.alt_thickness           = self:get_setting('alt-thickness') or self.thickness
   self.destroy_buildings       = self:get_setting('destroy-buildings') or false
+  self.clearable               = {}
+  self.blocking_types          = self:compute_blocking_types()
+  self.ghosted_tiles           = {} -- tiles this drag has already ghosted
+  self.destroying              = false -- set true by the right-drag handler
   self.undo_is_new             = true -- each drag starts a fresh undo item
 
   -- self:log('local init finished, self = ' .. serpent.block(self))
