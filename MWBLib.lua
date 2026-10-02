@@ -220,7 +220,7 @@ function MWBLib.hash_bbox(box)
     return cantorPair_v1(MWBLib.hash_position(box.left_top), MWBLib.hash_position(box.right_bottom))
 end
 
-function MWBLib.deconstruct_entities(player, entities)
+function MWBLib.deconstruct_entities(player, entities, item_index)
   if entities == nil or #entities == 0 then
     log("deconstruct_entities passed nil or empty list")
     return
@@ -230,7 +230,8 @@ function MWBLib.deconstruct_entities(player, entities)
     player.surface.deconstruct_area{
       area   = entity.bounding_box,
       player = player,
-      force  = player.force
+      force  = player.force,
+      item_index = item_index
     }
   end
 end
