@@ -8,6 +8,9 @@
 ### Changed
 - Shift+drag now builds walls with the alternate thickness (it previously shared the normal selection); right-drag is the destructive clear.
 
+### Fixed
+- Wall ghosts are now placed on wall tiles whose trees/rocks are being cleared, and on every spot the destructive right-drag clears (including player-built entities when that setting is on). A build-check value that was removed back in Factorio 1.1.6 had been left in place, so the ghost placement test failed whenever anything stood on the wall tile and those spots were silently skipped. Each spot is now decided from the entities that really overlap that one tile, and only entity types that can actually obstruct a wall count - so a robot flying over the line, the character, or an item on the ground no longer leaves a hole in it. A spot holding anything this drag will not clear (a building during left-drag) is skipped rather than ghosted, and no bot is ever left hovering over a blocked build.
+
 ## [2.0.0] - 2026-09-30
 ### Changed
 Updated for Factorio 2.0: selection tool prototype now uses `select`/`alt_select` mode tables, and entity-ghost creation no longer passes the removed `type` field.
