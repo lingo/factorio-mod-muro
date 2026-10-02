@@ -31,6 +31,13 @@ data:extend({
     },
     {
         type          = "bool-setting",
+        name          = "muro-wall-builder-destroy-buildings",
+        default_value = false,
+        setting_type  = "runtime-per-user",
+        order         = 'e[muro-wall-builder-settings]'
+    },
+    {
+        type          = "bool-setting",
         name          = "muro-wall-builder-deconstruct",
         default_value = true,
         setting_type  = "runtime-per-user",
