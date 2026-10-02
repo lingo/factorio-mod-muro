@@ -13,6 +13,13 @@ local MuroWallBuilder = {
     alt_thickness       = 2,
     placer              = nil,
 
+    -- undo support (2.0 LuaUndoRedoStack): undo_index is the index of the
+    -- undo item to add the action to; 0 creates a NEW item, and after that
+    -- the new item is the most recent one, i.e. index 1.
+    UNDO_NEW             = 0,
+    UNDO_LAST            = 1,
+    undo_is_new          = true,
+
     -- destruction (right-drag): trees/rocks always, player-built stuff
     -- only when the destroy-buildings setting is on.
     DECON_TYPES_ALL     = {'tree', 'simple-entity'},
@@ -134,9 +141,20 @@ function MuroWallBuilder:find_deconstructable_entities(position)
   return filtered_entities
 end
 
+-- First call of a drag creates a fresh undo item (0); subsequent calls
+-- merge into it (1 = most recent). local_init resets undo_is_new per drag.
+function MuroWallBuilder:next_undo_index()
+  if self.undo_is_new then
+    self.undo_is_new = false
+    return self.UNDO_NEW
+  end
+  return self.UNDO_LAST
+end
+
 function MuroWallBuilder:deconstruct_entities(entities)
-  -- item_index omitted: we have no planner item stack to attribute undo to
-  return MWBLib.deconstruct_entities(self.player, entities)
+  -- player+undo_index make these marks Ctrl+Z-able (trees/rocks aren't
+  -- restorable by the game itself, matching vanilla deconstruction)
+  return MWBLib.deconstruct_entities(self.player, entities, self:next_undo_index())
 end
 
 function MuroWallBuilder:place_wall_ghost(position)
@@ -162,6 +180,8 @@ function MuroWallBuilder:place_wall_ghost(position)
     expires=false,
     position=position,
     force=self.player.force,
+    player=self.player,
+    undo_index=self:next_undo_index(),
     raise_built=true
   }
 
@@ -319,7 +339,7 @@ function MuroWallBuilder:deconstruct_wall_footprint(event)
           -- spot is a tile center; the wall's tile is the 1x1 square around it
           if MWBLib.boxes_overlap({x = spot.x - 0.5, y = spot.y - 0.5},
                                   {x = spot.x + 0.5, y = spot.y + 0.5}, box) then
-            entity.order_deconstruction(self.player.force)
+            entity.order_deconstruction(self.player.force, self.player, self:next_undo_index())
             marked = marked + 1
             break
           end
@@ -488,6 +508,7 @@ function MuroWallBuilder:local_init(event)
   self.mark_for_deconstruction = self:get_setting('deconstruct') or self.mark_for_deconstruction
   self.alt_thickness           = self:get_setting('alt-thickness') or self.thickness
   self.destroy_buildings       = self:get_setting('destroy-buildings') or false
+  self.undo_is_new             = true -- each drag starts a fresh undo item
 
   -- self:log('local init finished, self = ' .. serpent.block(self))
 end

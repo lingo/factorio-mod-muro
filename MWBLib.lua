@@ -227,19 +227,16 @@ function MWBLib.boxes_overlap(lt, rb, entity_selection_box)
      and rb.y > entity_selection_box.left_top.y
 end
 
-function MWBLib.deconstruct_entities(player, entities, item_index)
+function MWBLib.deconstruct_entities(player, entities, undo_index)
   if entities == nil or #entities == 0 then
     log("deconstruct_entities passed nil or empty list")
     return
   end
 
   for _,entity in ipairs(entities) do
-    player.surface.deconstruct_area{
-      area   = entity.bounding_box,
-      player = player,
-      force  = player.force,
-      item_index = item_index
-    }
+    if entity.valid then
+      entity.order_deconstruction(player.force, player, undo_index)
+    end
   end
 end
 

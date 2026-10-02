@@ -26,7 +26,7 @@ data:extend({
     reverse_select = {
       border_color = {r = 0.8, g = 0.2, b = 0.2, a = 0.2},
       cursor_box_type = "entity",
-      mode = {"deconstruct"},
+      mode = {"deconstruct", "any-tile"},
       entity_filters = {},
       entity_filter_mode = "whitelist",
     },
