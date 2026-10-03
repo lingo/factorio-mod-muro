@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.4] 2026-10-03
+- chore: add missing mod thumbnail
+
+## [2.1.3] 2026-10-03
+- fix: re-disable debug logging
+
+## [2.1.2] 2026-10-03
+- feat: add user-submitted RU translation and two LLM-made translations (FR, DE)
+
 ## [2.1.1] 2026-10-03
 ### Fixed
 - Right-drag destruction now removes wall ghosts by default, plus other player-placeable entity ghosts when "Destroy buildings" is enabled.
