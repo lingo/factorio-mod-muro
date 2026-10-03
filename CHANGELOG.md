@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [2.1.1] 2026-10-03
 ### Fixed
 - Right-drag destruction now removes wall ghosts by default, plus other player-placeable entity ghosts when "Destroy buildings" is enabled.
 - Right-drag destruction now includes the bottom and right edges of cursor-coordinate selections.
