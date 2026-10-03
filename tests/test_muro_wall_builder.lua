@@ -40,6 +40,8 @@ local function fake_entity(spec)
     bounding_box = spec.bounding_box or box(0.1, 0.1, 0.9, 0.9),
     secondary_bounding_box = spec.secondary_bounding_box,
     unit_number = spec.unit_number,
+    ghost_name = spec.ghost_name,
+    ghost_type = spec.ghost_type,
     to_be_deconstructed = function() return spec.already_marked or false end,
     order_deconstruction = function()
       ordered = ordered + 1
@@ -59,6 +61,15 @@ local function fake_builder(entities, options)
   local surface = {
     find_entities_filtered = function(filter)
       last_filter = filter
+      if filter.type then
+        local filtered = {}
+        for _,entity in ipairs(entities) do
+          if entity.type == filter.type then
+            filtered[#filtered + 1] = entity
+          end
+        end
+        return filtered
+      end
       return entities
     end,
     can_place_entity = function(args)
@@ -261,6 +272,15 @@ test("entity searches receive collision layers, not a CollisionMask", function()
   assert(received.layers == nil)
 end)
 
+test("ghost searches bypass collision-mask filtering", function()
+  local builder = fake_builder({})
+  builder:ghosts_on_wall_spot({x = 0.5, y = 0.5})
+  local received = builder.last_filter()
+  assert(received.type == "entity-ghost")
+  assert(received.force == builder.player.force)
+  assert(received.collision_mask == nil)
+end)
+
 test("prototype categories are calculated once and cached", function()
   local previous_prototypes = prototypes
   local calls = 0
@@ -409,6 +429,65 @@ test("reverse selection deconstructs modded placeable entities without ghosts", 
   builder:deconstruct(box(0, 0, 1, 1), 1)
   assert(machine.order_count() == 1)
   assert(builder.created_count() == 0)
+end)
+
+test("reverse selection removes wall ghosts by default", function()
+  local ghost = fake_entity{
+    name = "entity-ghost",
+    type = "entity-ghost",
+    ghost_name = "stone-wall",
+    ghost_type = "wall",
+  }
+  local builder = fake_builder({ghost}, {destroying = true})
+  builder:deconstruct(box(0, 0, 1, 1), 1)
+  assert(ghost.order_count() == 1)
+end)
+
+test("reverse selection leaves non-wall ghosts when building destruction is off", function()
+  local ghost = fake_entity{
+    name = "entity-ghost",
+    type = "entity-ghost",
+    ghost_name = "assembling-machine-3",
+    ghost_type = "assembling-machine",
+  }
+  local builder = fake_builder({ghost}, {
+    destroying = true,
+    placeable = {["assembling-machine-3"] = {}},
+  })
+  builder:deconstruct(box(0, 0, 1, 1), 1)
+  assert(ghost.order_count() == 0)
+end)
+
+test("reverse selection removes placeable entity ghosts with building destruction", function()
+  local ghost = fake_entity{
+    name = "entity-ghost",
+    type = "entity-ghost",
+    ghost_name = "mod-machine",
+    ghost_type = "future-machine-type",
+  }
+  local builder = fake_builder({ghost}, {
+    destroying = true,
+    destroy_buildings = true,
+    placeable = {["mod-machine"] = {}},
+  })
+  builder:deconstruct(box(0, 0, 1, 1), 1)
+  assert(ghost.order_count() == 1)
+end)
+
+test("reverse selection leaves non-placeable entity ghosts", function()
+  local ghost = fake_entity{
+    name = "entity-ghost",
+    type = "entity-ghost",
+    ghost_name = "script-building",
+    ghost_type = "future-building-type",
+  }
+  local builder = fake_builder({ghost}, {
+    destroying = true,
+    destroy_buildings = true,
+    buildings = {["script-building"] = {}},
+  })
+  builder:deconstruct(box(0, 0, 1, 1), 1)
+  assert(ghost.order_count() == 0)
 end)
 
 test("script-only buildings block but are not destroyed", function()

@@ -103,7 +103,9 @@ function MuroWallBuilder:is_natural_obstacle(entity)
 end
 
 function MuroWallBuilder:is_player_placeable(entity)
-  return self.player_placeable_prototypes[entity.name] ~= nil
+  local name = entity.type == "entity-ghost" and entity.ghost_name
+    or entity.name
+  return self.player_placeable_prototypes[name] ~= nil
 end
 
 function MuroWallBuilder:is_building_obstacle(entity)
@@ -130,6 +132,12 @@ function MuroWallBuilder:is_non_blocking(entity)
 end
 
 function MuroWallBuilder:may_clear(entity)
+  if entity.type == "entity-ghost" then
+    return self.destroying
+      and (entity.ghost_type == "wall"
+        or (self.destroy_buildings and self:is_player_placeable(entity)))
+  end
+
   if self:is_natural_obstacle(entity) then
     return self.destroying or self.mark_for_deconstruction
   end
@@ -176,6 +184,27 @@ function MuroWallBuilder:entities_on_wall_spot(position)
   for _,entity in ipairs(entities) do
     if self:entity_overlaps_box(entity, box) then
       overlapping[#overlapping + 1] = entity
+    end
+  end
+
+  return overlapping
+end
+
+-- Ghosts do not necessarily share their inner entity's collision mask, so
+-- fetch them separately from the real entities that collide with a wall.
+-- This keeps right-drag removal reliable without making ghosts block builds.
+function MuroWallBuilder:ghosts_on_wall_spot(position)
+  local box = self:wall_collision_box(position)
+  local ghosts = self.player.surface.find_entities_filtered{
+    area = box,
+    type = "entity-ghost",
+    force = self.player.force,
+  }
+  local overlapping = {}
+
+  for _,ghost in ipairs(ghosts) do
+    if self:entity_overlaps_box(ghost, box) then
+      overlapping[#overlapping + 1] = ghost
     end
   end
 
@@ -328,11 +357,20 @@ end
 
 function MuroWallBuilder:deconstruct_wall_spot(position)
   for _,entity in ipairs(self:entities_on_wall_spot(position)) do
-    if not self:is_ignorable(entity) and not self:is_non_blocking(entity)
+    if entity.type ~= "entity-ghost" and not self:is_non_blocking(entity)
         and self:may_clear(entity) then
       if not self:order_deconstruction_once(entity) then
         log('muro: could not order deconstruction of ' .. entity.name ..
             ' at ' .. position.x .. ',' .. position.y)
+      end
+    end
+  end
+
+  for _,ghost in ipairs(self:ghosts_on_wall_spot(position)) do
+    if self:may_clear(ghost) then
+      if not self:order_deconstruction_once(ghost) then
+        log('muro: could not remove ' .. ghost.ghost_name .. ' ghost at ' ..
+            position.x .. ',' .. position.y)
       end
     end
   end

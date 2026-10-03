@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+- Right-drag destruction now removes wall ghosts by default, plus other player-placeable entity ghosts when "Destroy buildings" is enabled.
+
 ## [2.1.0] - 2026-09-30
 ### Added
 - Undo support: ghost placement and deconstruction marks made with the tool are grouped per drag and can be undone with Ctrl+Z (trees/rocks are not restorable by the game, same as with the vanilla deconstruction planner).
