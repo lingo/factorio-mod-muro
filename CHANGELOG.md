@@ -3,13 +3,13 @@
 ## [2.1.0] - 2026-09-30
 ### Added
 - Undo support: ghost placement and deconstruction marks made with the tool are grouped per drag and can be undone with Ctrl+Z (trees/rocks are not restorable by the game, same as with the vanilla deconstruction planner).
-- Destruction mode: right-click-drag with the tool clears and rebuilds the wall line: marks trees/rocks (and with the "Destroy buildings" setting, default on, also player-built entities) for deconstruction — but only inside the exact wall footprint, not the whole dragged rectangle — then lays the wall ghosts over the same spots.
+- Destruction mode: right-click-drag with the tool marks trees/rocks (and with the "Destroy buildings" setting, default on, also player-built entities) for deconstruction only inside the exact wall footprint, without placing new wall ghosts.
 
 ### Changed
 - Shift+drag now builds walls with the alternate thickness (it previously shared the normal selection); right-drag is the destructive clear.
 
 ### Fixed
-- Wall ghosts are now placed on wall tiles whose trees/rocks are being cleared, and on every spot the destructive right-drag clears (including player-built entities when that setting is on). A build-check value that was removed back in Factorio 1.1.6 had been left in place, so the ghost placement test failed whenever anything stood on the wall tile and those spots were silently skipped. Each spot is now decided from the entities that really overlap that one tile, and only entity types that can actually obstruct a wall count - so a robot flying over the line, the character, or an item on the ground no longer leaves a hole in it. A spot holding anything this drag will not clear (a building during left-drag) is skipped rather than ghosted, and no bot is ever left hovering over a blocked build.
+- Wall ghosts are now placed on wall tiles whose trees/rocks are being cleared. A build-check value that was removed back in Factorio 1.1.6 had been left in place, so the ghost placement test failed whenever anything stood on the wall tile and those spots were silently skipped. Each spot is now decided from the entities that really overlap that one tile, and only entity types that can actually obstruct a wall count - so a robot flying over the line, the character, or an item on the ground no longer leaves a hole in it. A spot holding anything this drag will not clear (a building during left-drag) is skipped rather than ghosted, and no bot is ever left hovering over a blocked build.
 
 ## [2.0.0] - 2026-09-30
 ### Changed
