@@ -5,7 +5,7 @@
 
 package.path = "./?.lua;" .. package.path
 
-log = function() end
+log = function(_message) end
 defines = {build_check_type = {script_ghost = 4}}
 
 local MuroWallBuilder = require("MuroWallBuilder")
@@ -61,16 +61,16 @@ local function fake_builder(entities, options)
   local surface = {
     find_entities_filtered = function(filter)
       last_filter = filter
-      if filter.type then
-        local filtered = {}
-        for _,entity in ipairs(entities) do
-          if entity.type == filter.type then
-            filtered[#filtered + 1] = entity
-          end
+      local filtered = {}
+      for _,entity in ipairs(entities) do
+        local type_matches = not filter.type or entity.type == filter.type
+        local area_matches = not filter.area or MWBLib.boxes_overlap(
+          filter.area.left_top, filter.area.right_bottom, entity.bounding_box)
+        if type_matches and area_matches then
+          filtered[#filtered + 1] = entity
         end
-        return filtered
       end
-      return entities
+      return filtered
     end,
     can_place_entity = function(args)
       last_build_check = args
@@ -217,11 +217,20 @@ test("tile positions become exclusive selection bounds", function()
   for _,spot in ipairs(spots) do assert(spot.x == 3.5) end
 end)
 
-test("selection area is unchanged when no tile list is supplied", function()
+test("cursor selection bounds snap outward to whole tiles", function()
   local builder = fake_builder({})
-  local original = box(-2, -1, 4, 7)
-  assert(builder:selection_area{area = original} == original)
-  assert(builder:selection_area{area = original, tiles = {}} == original)
+  local selected = builder:selection_area{
+    area = box(-2.5, -1.5, 4.5, 7.5),
+  }
+  assert(selected.left_top.x == -3 and selected.right_bottom.x == 5)
+  assert(selected.left_top.y == -2 and selected.right_bottom.y == 8)
+
+  local aligned = builder:selection_area{
+    area = box(-2, -1, 4, 7),
+    tiles = {},
+  }
+  assert(aligned.left_top.x == -2 and aligned.right_bottom.x == 4)
+  assert(aligned.left_top.y == -1 and aligned.right_bottom.y == 7)
 end)
 
 test("selection bounds handle negative tile coordinates", function()
@@ -429,6 +438,44 @@ test("reverse selection deconstructs modded placeable entities without ghosts", 
   builder:deconstruct(box(0, 0, 1, 1), 1)
   assert(machine.order_count() == 1)
   assert(builder.created_count() == 0)
+end)
+
+test("reverse selection includes all four cursor-area edges", function()
+  local top = fake_entity{
+    name = "tree-top", type = "tree", unit_number = 101,
+    bounding_box = box(2.1, 0.1, 2.9, 0.9),
+  }
+  local right = fake_entity{
+    name = "tree-right", type = "tree", unit_number = 102,
+    bounding_box = box(4.1, 2.1, 4.9, 2.9),
+  }
+  local bottom = fake_entity{
+    name = "tree-bottom", type = "tree", unit_number = 103,
+    bounding_box = box(2.1, 4.1, 2.9, 4.9),
+  }
+  local left = fake_entity{
+    name = "tree-left", type = "tree", unit_number = 104,
+    bounding_box = box(0.1, 2.1, 0.9, 2.9),
+  }
+  local builder = fake_builder({top, right, bottom, left}, {
+    destroying = true,
+  })
+  local selected = builder:selection_area{
+    area = box(0.5, 0.5, 4.5, 4.5),
+    -- Simulate the half-open tile list that omits the cursor's final row and
+    -- column even though the raw selection reaches their centers.
+    tiles = {
+      {position = {x = 0, y = 0}},
+      {position = {x = 3, y = 3}},
+    },
+  }
+
+  builder:deconstruct(selected, 1)
+
+  assert(top.order_count() == 1)
+  assert(right.order_count() == 1)
+  assert(bottom.order_count() == 1)
+  assert(left.order_count() == 1)
 end)
 
 test("reverse selection removes wall ghosts by default", function()

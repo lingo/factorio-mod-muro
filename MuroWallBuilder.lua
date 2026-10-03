@@ -455,30 +455,38 @@ end
 -- reverse selection remains a deconstruction-only operation in every mode.
 
 function MuroWallBuilder:selection_area(event)
-  local area = event.area
+  -- Event areas use the cursor positions as their endpoints. Snap them
+  -- outward to tile boundaries so the tiles containing the inclusive
+  -- right/bottom endpoint are part of the exclusive area wall_spots uses.
+  local area = {
+    left_top = {
+      x = math.floor(event.area.left_top.x),
+      y = math.floor(event.area.left_top.y),
+    },
+    right_bottom = {
+      x = math.ceil(event.area.right_bottom.x),
+      y = math.ceil(event.area.right_bottom.y),
+    },
+  }
 
   if event.tiles and #event.tiles > 0 then
-    local MAX_SIZE = 2000000 -- https://wiki.factorio.com/World_generator#Maximum_map_size_and_used_memory
-    area = {left_top = {x = MAX_SIZE, y = MAX_SIZE}, right_bottom = {x = -MAX_SIZE, y = -MAX_SIZE}}
+    -- Include reported tiles as well as the snapped cursor area. Depending on
+    -- the exact cursor endpoints, the tile list can omit its bottom/right
+    -- boundary even though those endpoint tiles are visibly selected.
     for _,tile in ipairs(event.tiles) do
       if tile.position.x < area.left_top.x then
         area.left_top.x = tile.position.x
       end
-      if tile.position.x > area.right_bottom.x then
-        area.right_bottom.x = tile.position.x
+      if tile.position.x + 1 > area.right_bottom.x then
+        area.right_bottom.x = tile.position.x + 1
       end
       if tile.position.y < area.left_top.y then
         area.left_top.y = tile.position.y
       end
-      if tile.position.y > area.right_bottom.y then
-        area.right_bottom.y = tile.position.y
+      if tile.position.y + 1 > area.right_bottom.y then
+        area.right_bottom.y = tile.position.y + 1
       end
     end
-
-    -- Tile positions name their top-left corners; wall_spots expects an area
-    -- whose right/bottom edge is exclusive.
-    area.right_bottom.x = area.right_bottom.x + 1
-    area.right_bottom.y = area.right_bottom.y + 1
   end
 
   return area
