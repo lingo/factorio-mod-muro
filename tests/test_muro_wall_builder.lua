@@ -6,7 +6,17 @@
 package.path = "./?.lua;" .. package.path
 
 log = function(_message) end
-defines = {build_check_type = {script_ghost = 4}}
+defines = {
+  build_check_type = {script_ghost = 4},
+  events = {
+    on_player_selected_area = 1,
+    on_player_alt_selected_area = 2,
+    on_runtime_mod_setting_changed = 3,
+    on_player_reverse_selected_area = 4,
+    on_player_alt_reverse_selected_area = 5,
+    on_lua_shortcut = 6,
+  },
+}
 
 local MuroWallBuilder = require("MuroWallBuilder")
 local MWBLib = require("MWBLib")
@@ -198,6 +208,61 @@ test("alternate thickness expands a narrow selection once", function()
   local builder = fake_builder({})
   local spots = builder:wall_spots(box(0, 0, 1, 5), 2)
   assert(#spots == 10, "expected a 2x5 filled outline")
+end)
+
+test("selection tool enables shift-right selection", function()
+  local previous_data = data
+  local registered
+  data = {
+    extend = function(_self, prototypes)
+      registered = prototypes
+    end,
+  }
+
+  dofile("data.lua")
+  data = previous_data
+
+  local selection_tool = registered[1]
+  assert(selection_tool.name == MuroWallBuilder.NAME)
+  assert(selection_tool.alt_reverse_select,
+    "selection tool must define an alternate reverse mode")
+  assert(selection_tool.alt_reverse_select.mode[1] == "deconstruct")
+end)
+
+test("shift-right selection deconstructs with alternate thickness", function()
+  local handlers = {}
+  local previous_script = script
+  local previous_local_init = MuroWallBuilder.local_init
+  local previous_reverse_handler = MuroWallBuilder.on_reverse_selected_area
+  local previous_thickness = MuroWallBuilder.thickness
+  local previous_alt_thickness = MuroWallBuilder.alt_thickness
+  local received_thickness
+
+  script = {
+    on_event = function(event_id, handler)
+      handlers[event_id] = handler
+    end,
+  }
+  MuroWallBuilder.local_init = function() end
+  MuroWallBuilder.on_reverse_selected_area = function(_self, _event, thickness)
+    received_thickness = thickness
+  end
+  MuroWallBuilder.thickness = 1
+  MuroWallBuilder.alt_thickness = 3
+
+  MuroWallBuilder:bind_events()
+  handlers[defines.events.on_player_alt_reverse_selected_area]{
+    item = MuroWallBuilder.NAME,
+  }
+
+  script = previous_script
+  MuroWallBuilder.local_init = previous_local_init
+  MuroWallBuilder.on_reverse_selected_area = previous_reverse_handler
+  MuroWallBuilder.thickness = previous_thickness
+  MuroWallBuilder.alt_thickness = previous_alt_thickness
+
+  assert(received_thickness == 3,
+    "shift-right selection should use alternate thickness")
 end)
 
 test("tile positions become exclusive selection bounds", function()

@@ -497,6 +497,11 @@ function MuroWallBuilder:on_selected_area(event, thickness)
   self:build(self:selection_area(event), thickness)
 end
 
+function MuroWallBuilder:on_reverse_selected_area(event, thickness)
+  self.destroying = true
+  self:deconstruct(self:selection_area(event), thickness)
+end
+
 
 
 function MuroWallBuilder:bind_events()
@@ -544,8 +549,20 @@ function MuroWallBuilder:bind_events()
     local success,returnValue = pcall(function()
       if event.item ~= this.NAME then return; end --If its not our wall builder, exit
       this:local_init(event)
-      this.destroying = true -- right-drag is the destructive mode
-      this:deconstruct(this:selection_area(event), this.thickness)
+      this:on_reverse_selected_area(event, this.thickness)
+      end)
+    if success then
+      return returnValue
+    end
+    log(returnValue)
+    return false
+  end)
+
+  script.on_event(defines.events.on_player_alt_reverse_selected_area, function(event)
+    local success,returnValue = pcall(function()
+      if event.item ~= this.NAME then return; end --If its not our wall builder, exit
+      this:local_init(event)
+      this:on_reverse_selected_area(event, this.alt_thickness)
       end)
     if success then
       return returnValue
